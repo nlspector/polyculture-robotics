@@ -62,7 +62,7 @@ int main(int argc, char * argv[]) try
         Mat hsv_frame;
         Mat red_mask;
         cvtColor(color_mat, hsv_frame, COLOR_RGB2HSV);
-        inRange(hsv_frame, Scalar(110,120,50), Scalar(130,255,255), red_mask);
+        inRange(hsv_frame, Scalar(110,160,50), Scalar(130,255,255), red_mask);
 
         // Generate "near" mask image:
         // auto near = frame_to_mat(bw_depth);
