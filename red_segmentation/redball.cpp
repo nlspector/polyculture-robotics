@@ -59,34 +59,39 @@ int main(int argc, char * argv[]) try
         colorize.set_option(RS2_OPTION_COLOR_SCHEME, 2);
         frame bw_depth = depth.apply_filter(colorize);
 
-        // Generate "near" mask image:
-        auto near = frame_to_mat(bw_depth);
-        cvtColor(near, near, COLOR_BGR2GRAY);
-        // Take just values within range [180-255]
-        // These will roughly correspond to near objects due to histogram equalization
-        create_mask_from_depth(near, 180, THRESH_BINARY);
+        Mat hsv_frame;
+        Mat red_mask;
+        cvtColor(color_mat, hsv_frame, COLOR_RGB2HSV);
+        inRange(hsv_frame, Scalar(110,120,50), Scalar(130,255,255), red_mask);
 
-        // Generate "far" mask image:
-        auto far = frame_to_mat(bw_depth);
-        cvtColor(far, far, COLOR_BGR2GRAY);
-        far.setTo(255, far == 0); // Note: 0 value does not indicate pixel near the camera, and requires special attention 
-        create_mask_from_depth(far, 100, THRESH_BINARY_INV);
+        // Generate "near" mask image:
+        // auto near = frame_to_mat(bw_depth);
+        // cvtColor(near, near, COLOR_BGR2GRAY);
+        // // Take just values within range [180-255]
+        // // These will roughly correspond to near objects due to histogram equalization
+        // create_mask_from_depth(near, 180, THRESH_BINARY);
+
+        // // Generate "far" mask image:
+        // auto far = frame_to_mat(bw_depth);
+        // cvtColor(far, far, COLOR_BGR2GRAY);
+        // far.setTo(255, far == 0); // Note: 0 value does not indicate pixel near the camera, and requires special attention 
+        // create_mask_from_depth(far, 100, THRESH_BINARY_INV);
 
         // GrabCut algorithm needs a mask with every pixel marked as either:
-        // BGD, FGB, PR_BGD, PR_FGB
-        Mat mask;
-        mask.create(near.size(), CV_8UC1); 
-        mask.setTo(Scalar::all(GC_BGD)); // Set "background" as default guess
-        mask.setTo(GC_PR_BGD, far == 0); // Relax this to "probably background" for pixels outside "far" region
-        mask.setTo(GC_FGD, near == 255); // Set pixels within the "near" region to "foreground"
+        // // BGD, FGB, PR_BGD, PR_FGB
+        // Mat mask;
+        // mask.create(near.size(), CV_8UC1); 
+        // mask.setTo(Scalar::all(GC_BGD)); // Set "background" as default guess
+        // mask.setTo(GC_PR_BGD, far == 0); // Relax this to "probably background" for pixels outside "far" region
+        // mask.setTo(GC_FGD, near == 255); // Set pixels within the "near" region to "foreground"
 
         // Run Grab-Cut algorithm:
-        Mat bgModel, fgModel; 
-        grabCut(color_mat, mask, Rect(), bgModel, fgModel, 1, GC_INIT_WITH_MASK);
+        // Mat bgModel, fgModel; 
+        // grabCut(color_mat, mask, Rect(), bgModel, fgModel, 1, GC_INIT_WITH_MASK);
 
         // Extract foreground pixels based on refined mask from the algorithm
         Mat3b foreground = Mat3b::zeros(color_mat.rows, color_mat.cols);
-        color_mat.copyTo(foreground, (mask == GC_FGD) | (mask == GC_PR_FGD));
+        color_mat.copyTo(foreground, (red_mask == 255));
         imshow(window_name, foreground);
     }
 
