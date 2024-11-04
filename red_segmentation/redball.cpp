@@ -56,13 +56,15 @@ int main(int argc, char * argv[]) try
 
         // Colorize depth image with white being near and black being far
         // This will take advantage of histogram equalization done by the colorizer
-        colorize.set_option(RS2_OPTION_COLOR_SCHEME, 2);
+        // colorize.set_option(RS2_OPTION_COLOR_SCHEME, 2);
         frame bw_depth = depth.apply_filter(colorize);
 
         Mat hsv_frame;
         Mat red_mask;
         cvtColor(color_mat, hsv_frame, COLOR_RGB2HSV);
         inRange(hsv_frame, Scalar(110,160,50), Scalar(130,255,255), red_mask);
+
+        auto color_depth = frame_to_mat(bw_depth);
 
         // Generate "near" mask image:
         // auto near = frame_to_mat(bw_depth);
@@ -91,7 +93,7 @@ int main(int argc, char * argv[]) try
 
         // Extract foreground pixels based on refined mask from the algorithm
         Mat3b foreground = Mat3b::zeros(color_mat.rows, color_mat.cols);
-        color_mat.copyTo(foreground, (red_mask == 255));
+        color_depth.copyTo(foreground, (red_mask == 255));
         imshow(window_name, foreground);
     }
 
