@@ -21,7 +21,7 @@ void add(dfs_result* r1, dfs_result r2) {
 
 // Function to perform DFS and count the size of the component
 dfs_result dfs(cv::Mat matrix, int i, int j, std::vector<std::vector<bool>>& visited) {
-    if (i < 0 || i >= matrix.rows || j < 0 || j >= matrix.cols || visited[i][j] || matrix.at<int>(i, j) == 0) {
+    if (i < 0 || i >= matrix.rows || j < 0 || j >= matrix.cols || visited[i][j] || matrix.at<uint8_t>(i, j) != 255) {
         return dfs_result {
             count: 0,
             x_accum: 0,
@@ -32,8 +32,8 @@ dfs_result dfs(cv::Mat matrix, int i, int j, std::vector<std::vector<bool>>& vis
     visited[i][j] = true;
     dfs_result out = dfs_result {
         count: 1,
-        x_accum: i,
-        y_accum: j,
+        x_accum: j,
+        y_accum: i,
     };
 
     // Explore adjacent cells
@@ -60,7 +60,7 @@ dfs_result largestConnectedComponent(cv::Mat matrix) {
 
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            if (matrix.at<int>(i, j) != 0 && !visited[i][j]) {
+            if (matrix.at<uint8_t>(i, j) == 255 && !visited[i][j]) {
                 dfs_result result = dfs(matrix, i, j, visited);
                 if (result.count > maxComponentSize) {
                     x_centroid = result.x_accum / result.count;
@@ -170,15 +170,16 @@ int main(int argc, char * argv[]) try
         Mat3b foreground = Mat3b::zeros(color_mat.rows, color_mat.cols);
         color_depth.copyTo(foreground, (red_mask == 255));
         dfs_result cc_info = largestConnectedComponent(red_mask);
-        std::cout << cc_info.count << " = size. Pixel: " << cc_info.x_accum << ", " << + cc_info.y_accum << "\n";
+        std::cout << cc_info.count << " = size. Pixel: " << cc_info.y_accum << ", " << + cc_info.x_accum << "\n";
 
         float point[3];
         // Get the depth frame's dimensions
         float width = depth.get_width();
         float height = depth.get_height();
-        float pixel[2] = {(float) cc_info.y_accum, (float) cc_info.x_accum};
+        float pixel[2] = {(float) cc_info.x_accum, (float) cc_info.y_accum};
         rs2_deproject_pixel_to_point(point, &intrinsics, pixel, depth.get_distance(pixel[0], pixel[1]));
         std::cout << point[0] << ", " << point[1] << ", " << point[2] << "\n";
+
         imshow(window_name, red_mask);
     }
 
