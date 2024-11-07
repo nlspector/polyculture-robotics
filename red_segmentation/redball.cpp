@@ -163,10 +163,12 @@ int main(int argc, char * argv[]) try
         rs2_deproject_pixel_to_point(point, &intrinsics, pixel, depth.get_distance(pixel[0], pixel[1]));
         std::cout << point[0] << ", " << point[1] << ", " << point[2] << "\n";
 
-        serialPutchar(fd, (char) point[0]);
-        serialPutchar(fd, (char) point[1]);
-        serialPutchar(fd, (char) point[2]);
-        serialPutchar(fd, 0);
+        // write floats to serial
+        for(int i = 0; i < 3; i++){
+            char buffer[64];
+            int ret = snprintf(buffer, sizeof buffer, "%f", point[i]);
+            serialPuts(fd, buffer);
+        }
 
         imshow(window_name, red_mask);
     }
