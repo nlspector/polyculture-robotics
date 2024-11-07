@@ -10,6 +10,7 @@ set_property(TARGET redball PROPERTY CXX_STANDARD 11)
 target_link_libraries(redball ${DEPENDENCIES})
 target_link_libraries(redball ${OpenCV_LIBS})
 target_link_libraries(redball ${realsense2_LIBRARY})
+target_link_libraries(redball wiringPi)
 set_target_properties (redball PROPERTIES
 	FOLDER "Examples/OpenCV"
 )

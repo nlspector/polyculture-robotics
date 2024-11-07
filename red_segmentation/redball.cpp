@@ -4,6 +4,7 @@
 #include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
 #include <opencv2/opencv.hpp>   // Include OpenCV API
 #include "../cv-helpers.hpp"    // Helper functions for conversions between RealSense and OpenCV
+#include <wiringSerial.h>
 
 struct dfs_result {
     double count;
@@ -102,6 +103,13 @@ int main(int argc, char * argv[]) try
             Point(erosion_size, erosion_size));
     };
 
+    int fd ;
+
+    if((fd=serialOpen("/dev/ttyACM0",9600))<0){
+        fprintf(stderr,"Unable to open serial device: %s\n",strerror(errno));
+        return 1;
+    }
+
     const int erosion_size = 3;
     auto erode_less = gen_element(erosion_size);
     auto erode_more = gen_element(erosion_size * 2);
@@ -141,31 +149,6 @@ int main(int argc, char * argv[]) try
 
         auto color_depth = frame_to_mat(bw_depth);
 
-        // Generate "near" mask image:
-        // auto near = frame_to_mat(bw_depth);
-        // cvtColor(near, near, COLOR_BGR2GRAY);
-        // // Take just values within range [180-255]
-        // // These will roughly correspond to near objects due to histogram equalization
-        // create_mask_from_depth(near, 180, THRESH_BINARY);
-
-        // // Generate "far" mask image:
-        // auto far = frame_to_mat(bw_depth);
-        // cvtColor(far, far, COLOR_BGR2GRAY);
-        // far.setTo(255, far == 0); // Note: 0 value does not indicate pixel near the camera, and requires special attention 
-        // create_mask_from_depth(far, 100, THRESH_BINARY_INV);
-
-        // GrabCut algorithm needs a mask with every pixel marked as either:
-        // // BGD, FGB, PR_BGD, PR_FGB
-        // Mat mask;
-        // mask.create(near.size(), CV_8UC1); 
-        // mask.setTo(Scalar::all(GC_BGD)); // Set "background" as default guess
-        // mask.setTo(GC_PR_BGD, far == 0); // Relax this to "probably background" for pixels outside "far" region
-        // mask.setTo(GC_FGD, near == 255); // Set pixels within the "near" region to "foreground"
-
-        // Run Grab-Cut algorithm:
-        // Mat bgModel, fgModel; 
-        // grabCut(color_mat, mask, Rect(), bgModel, fgModel, 1, GC_INIT_WITH_MASK);
-
         // Extract foreground pixels based on refined mask from the algorithm
         Mat3b foreground = Mat3b::zeros(color_mat.rows, color_mat.cols);
         color_depth.copyTo(foreground, (red_mask == 255));
@@ -179,6 +162,11 @@ int main(int argc, char * argv[]) try
         float pixel[2] = {(float) cc_info.x_accum, (float) cc_info.y_accum};
         rs2_deproject_pixel_to_point(point, &intrinsics, pixel, depth.get_distance(pixel[0], pixel[1]));
         std::cout << point[0] << ", " << point[1] << ", " << point[2] << "\n";
+
+        serialPutchar(fd, (char) point[0]);
+        serialPutchar(fd, (char) point[1]);
+        serialPutchar(fd, (char) point[2]);
+        serialPutchar(fd, 0);
 
         imshow(window_name, red_mask);
     }
