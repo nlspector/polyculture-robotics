@@ -84,6 +84,8 @@ int main(int argc, char * argv[]) try
     using namespace cv;
     using namespace rs2;
 
+    bool write_to_serial = argc > 1;
+
     // Define colorizer and align processing-blocks
     colorizer colorize;
     align align_to(RS2_STREAM_COLOR);
@@ -105,9 +107,11 @@ int main(int argc, char * argv[]) try
 
     int fd ;
 
-    if((fd=serialOpen("/dev/ttyACM0",9600))<0){
-        fprintf(stderr,"Unable to open serial device: %s\n",strerror(errno));
-        return 1;
+    if (write_to_serial) {
+        if((fd=serialOpen("/dev/ttyACM0",9600))<0){
+            fprintf(stderr,"Unable to open serial device: %s\n",strerror(errno));
+            return 1;
+        }
     }
 
     const int erosion_size = 3;
@@ -163,14 +167,16 @@ int main(int argc, char * argv[]) try
         rs2_deproject_pixel_to_point(point, &intrinsics, pixel, depth.get_distance(pixel[0], pixel[1]));
         std::cout << point[0] << ", " << point[1] << ", " << point[2] << "\n";
 
-        // write floats to serial
-        for(int i = 0; i < 3; i++){
-            char buffer[64];
-            int ret = snprintf(buffer, sizeof buffer, "%f", point[i]);
-            serialPuts(fd, buffer);
+        if (write_to_serial) {
+            // write floats to serial
+            for(int i = 0; i < 3; i++){
+                char buffer[64];
+                int ret = snprintf(buffer, sizeof buffer, "%f", point[i]);
+                serialPuts(fd, buffer);
+            }
         }
 
-        imshow(window_name, red_mask);
+        imshow(window_name, foreground);
     }
 
     return EXIT_SUCCESS;
