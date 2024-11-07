@@ -5,6 +5,79 @@
 #include <opencv2/opencv.hpp>   // Include OpenCV API
 #include "../cv-helpers.hpp"    // Helper functions for conversions between RealSense and OpenCV
 
+struct dfs_result {
+    double count;
+    double x_accum;
+    double y_accum;
+};
+
+void add(dfs_result* r1, dfs_result r2) {
+    r1->count += r2.count;
+    r1->x_accum += r2.x_accum;
+    r1->y_accum += r2.y_accum;
+}
+
+// thanks google gpt?
+
+// Function to perform DFS and count the size of the component
+dfs_result dfs(cv::Mat matrix, int i, int j, std::vector<std::vector<bool>>& visited) {
+    if (i < 0 || i >= matrix.rows || j < 0 || j >= matrix.cols || visited[i][j] || matrix.at<int>(i, j) == 0) {
+        return dfs_result {
+            count: 0,
+            x_accum: 0,
+            y_accum: 0,
+        };
+    }
+
+    visited[i][j] = true;
+    dfs_result out = dfs_result {
+        count: 1,
+        x_accum: i,
+        y_accum: j,
+    };
+
+    // Explore adjacent cells
+    add(&out, dfs(matrix, i + 1, j, visited));
+
+    add(&out, dfs(matrix, i - 1, j, visited));
+
+    add(&out, dfs(matrix, i, j - 1, visited));
+
+    add(&out, dfs(matrix, i, j + 1, visited));
+
+    return out;
+}
+
+dfs_result largestConnectedComponent(cv::Mat matrix) {
+    int rows = matrix.rows;
+    int cols = matrix.cols;
+    std::cout << rows << ", " << cols << std::endl;
+    double maxComponentSize = 0.0f;
+    double x_centroid = 0.0f;
+    double y_centroid = 0.0f;
+
+    std::vector<std::vector<bool>> visited(rows, std::vector<bool>(cols, false));
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            if (matrix.at<int>(i, j) != 0 && !visited[i][j]) {
+                dfs_result result = dfs(matrix, i, j, visited);
+                if (result.count > maxComponentSize) {
+                    x_centroid = result.x_accum / result.count;
+                    y_centroid = result.y_accum / result.count;
+                }
+                maxComponentSize = std::max(maxComponentSize, result.count);
+            }
+        }
+    }
+
+    dfs_result retval;
+    retval.count = maxComponentSize;
+    retval.x_accum = x_centroid;
+    retval.y_accum = y_centroid;
+    return retval;
+}
+
 int main(int argc, char * argv[]) try
 {
     using namespace cv;
@@ -45,13 +118,15 @@ int main(int argc, char * argv[]) try
     // Skips some frames to allow for auto-exposure stabilization
     for (int i = 0; i < 10; i++) pipe.wait_for_frames();
 
+    rs2_intrinsics intrinsics = pipe.get_active_profile().get_stream(RS2_STREAM_DEPTH).as<rs2::video_stream_profile>().get_intrinsics();
+
     while (waitKey(1) < 0 && getWindowProperty(window_name, WND_PROP_AUTOSIZE) >= 0)
     {
         frameset data = pipe.wait_for_frames();
         // Make sure the frameset is spatialy aligned 
         // (each pixel in depth image corresponds to the same pixel in the color image)
         frameset aligned_set = align_to.process(data);
-        frame depth = aligned_set.get_depth_frame();
+        depth_frame depth = aligned_set.get_depth_frame();
         auto color_mat = frame_to_mat(aligned_set.get_color_frame());
 
         // Colorize depth image with white being near and black being far
@@ -94,7 +169,17 @@ int main(int argc, char * argv[]) try
         // Extract foreground pixels based on refined mask from the algorithm
         Mat3b foreground = Mat3b::zeros(color_mat.rows, color_mat.cols);
         color_depth.copyTo(foreground, (red_mask == 255));
-        imshow(window_name, foreground);
+        dfs_result cc_info = largestConnectedComponent(red_mask);
+        std::cout << cc_info.count << " = size. Pixel: " << cc_info.x_accum << ", " << + cc_info.y_accum << "\n";
+
+        float point[3];
+        // Get the depth frame's dimensions
+        float width = depth.get_width();
+        float height = depth.get_height();
+        float pixel[2] = {(float) cc_info.y_accum, (float) cc_info.x_accum};
+        rs2_deproject_pixel_to_point(point, &intrinsics, pixel, depth.get_distance(pixel[0], pixel[1]));
+        std::cout << point[0] << ", " << point[1] << ", " << point[2] << "\n";
+        imshow(window_name, red_mask);
     }
 
     return EXIT_SUCCESS;
