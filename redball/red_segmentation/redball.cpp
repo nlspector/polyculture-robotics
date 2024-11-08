@@ -6,7 +6,7 @@
 #include "../cv-helpers.hpp"    // Helper functions for conversions between RealSense and OpenCV
 #include <wiringSerial.h>
 
-const float CAMERA_OFFSET = 0;
+const float CAMERA_OFFSET = -0.25f;
 
 struct dfs_result {
     double count;
@@ -24,7 +24,7 @@ void add(dfs_result* r1, dfs_result r2) {
 
 // Function to perform DFS and count the size of the component
 dfs_result dfs(cv::Mat matrix, int i, int j, std::vector<std::vector<bool>>& visited) {
-    if (i < 0 || i >= matrix.rows || j < 0 || j >= matrix.cols || visited[i][j] || matrix.at<uint8_t>(i, j) != 255) {
+    if (i < 0 || i >= matrix.rows || j < 0 || j >= matrix.cols || visited[i][j] || matrix.at<unsigned char>(i, j) != 255) {
         return dfs_result {
             count: 0,
             x_accum: 0,
@@ -54,7 +54,7 @@ dfs_result dfs(cv::Mat matrix, int i, int j, std::vector<std::vector<bool>>& vis
 dfs_result largestConnectedComponent(cv::Mat matrix) {
     int rows = matrix.rows;
     int cols = matrix.cols;
-    std::cout << rows << ", " << cols << std::endl;
+    // std::cout << rows << ", " << cols << std::endl;
     double maxComponentSize = 0.0f;
     double x_centroid = 0.0f;
     double y_centroid = 0.0f;
@@ -63,7 +63,7 @@ dfs_result largestConnectedComponent(cv::Mat matrix) {
 
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            if (matrix.at<uint8_t>(i, j) == 255 && !visited[i][j]) {
+            if (matrix.at<unsigned char>(i, j) == 255 && !visited[i][j]) {
                 dfs_result result = dfs(matrix, i, j, visited);
                 if (result.count > maxComponentSize) {
                     x_centroid = result.x_accum / result.count;
@@ -129,6 +129,7 @@ int main(int argc, char * argv[]) try
         erode(depth, depth, erode_more);
     };
 
+    int ctr = 0;
     // Skips some frames to allow for auto-exposure stabilization
     for (int i = 0; i < 10; i++) pipe.wait_for_frames();
 
@@ -136,6 +137,7 @@ int main(int argc, char * argv[]) try
 
     while (waitKey(1) < 0 && getWindowProperty(window_name, WND_PROP_AUTOSIZE) >= 0)
     {
+        ctr += 1;
         frameset data = pipe.wait_for_frames();
         // Make sure the frameset is spatialy aligned 
         // (each pixel in depth image corresponds to the same pixel in the color image)
@@ -159,7 +161,7 @@ int main(int argc, char * argv[]) try
         Mat3b foreground = Mat3b::zeros(color_mat.rows, color_mat.cols);
         color_depth.copyTo(foreground, (red_mask == 255));
         dfs_result cc_info = largestConnectedComponent(red_mask);
-        std::cout << cc_info.count << " = size. Pixel: " << cc_info.y_accum << ", " << + cc_info.x_accum << "\n";
+        // std::cout << cc_info.count << " = size. Pixel: " << cc_info.y_accum << ", " << + cc_info.x_accum << "\n";
 
         float point[3];
         // Get the depth frame's dimensions
@@ -167,13 +169,18 @@ int main(int argc, char * argv[]) try
         float height = depth.get_height();
         float pixel[2] = {(float) cc_info.x_accum, (float) cc_info.y_accum};
         rs2_deproject_pixel_to_point(point, &intrinsics, pixel, depth.get_distance(pixel[0], pixel[1]));
-        std::cout << point[0] << ", " << point[1] << ", " << point[2] << "\n";
+        // std::cout << point[0] << ", " << point[1] << ", " << point[2] << "\n";
+        if (ctr == 60) {
+            ctr = 0;
+            if (write_to_serial) {
+                // write depth to serial
+                float out = point[2] + CAMERA_OFFSET;
+                char buffer[64];
 
-        if (write_to_serial) {
-            // write depth to serial
-            char buffer[64];
-            int ret = snprintf(buffer, sizeof buffer, "%f", point[2] + CAMERA_OFFSET);
-            serialPuts(fd, buffer);
+                int ret = sprintf(buffer, "%f", out);
+                std::cout << "Writing " << buffer << " to serial..." << std::endl;
+                serialPuts(fd, buffer);
+            }
         }
 
         imshow(window_name, foreground);
