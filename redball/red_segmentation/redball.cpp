@@ -6,6 +6,8 @@
 #include "../cv-helpers.hpp"    // Helper functions for conversions between RealSense and OpenCV
 #include <wiringSerial.h>
 
+const float CAMERA_OFFSET = 0;
+
 struct dfs_result {
     double count;
     double x_accum;
@@ -168,12 +170,10 @@ int main(int argc, char * argv[]) try
         std::cout << point[0] << ", " << point[1] << ", " << point[2] << "\n";
 
         if (write_to_serial) {
-            // write floats to serial
-            for(int i = 0; i < 3; i++){
-                char buffer[64];
-                int ret = snprintf(buffer, sizeof buffer, "%f", point[i]);
-                serialPuts(fd, buffer);
-            }
+            // write depth to serial
+            char buffer[64];
+            int ret = snprintf(buffer, sizeof buffer, "%f", point[2] + CAMERA_OFFSET);
+            serialPuts(fd, buffer);
         }
 
         imshow(window_name, foreground);
