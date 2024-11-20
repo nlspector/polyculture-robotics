@@ -3,22 +3,16 @@
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
-#define SERVO_MIN 92  // Min pulse length out of 4096. Calibrated to be * 92 *.
-#define SERVO_MAX 680  // Max pulse length out of 4096. Calibrated to be * 680 *.
-#define NUM_SERVOS 4
-#define SERVO_DELAY 1000  // delay in miliseconds
-
-int servoPins[NUM_SERVOS] = {0,1,2,3};
-
+#define SERVOMIN 150  // Min pulse length out of 4096
+#define SERVOMAX 600  // Max pulse length out of 4096
 
 // Helper function to map angle (0-180) to PCA9685 PWM pulse length
 int angleToPulse(int angle) {
-  return map(angle, 0, 210, SERVO_MIN, SERVO_MAX);
+  return map(angle, 0, 180, SERVOMIN, SERVOMAX);
 }
 
 // Function to move servo to a target angle at a specified speed
 void moveServoToAngle(int channel, int currentAngle, int targetAngle, int speed) {
-
   int step = (targetAngle > currentAngle) ? 1 : -1; // Determine the direction of movement
   int delayTime = 1000 / speed;  // Speed control: higher speed means smaller delay
   
@@ -52,35 +46,10 @@ void setup() {
   Serial.begin(9600);
   pwm.begin();
   pwm.setPWMFreq(60);  // Analog servos run at ~60 Hz
-  
-  for(int i = 0; i < NUM_SERVOS; i++){
-    pwm.setPWM(servoPins[i],0,SERVO_MIN);
-    Serial.print("Servo "); Serial.print(i); Serial.print(" has ben initiated"); Serial.println("");
-  }
 }
 
 void loop() {
   // Example usage: Set angles with speeds for each servo
-  //setServoAnglesWithSpeed(90, 10, 45, 5, 135, 20); // Set servo angles with different speeds
+  setServoAnglesWithSpeed(90, 10, 45, 5, 135, 20); // Set servo angles with different speeds
   delay(1000); // Wait 1 second
-  //pwm.setPWM(0,0,SERVO_MAX);
-  //pwm.setPWM(1,0,SERVO_MAX);
-  //pwm.setPWM(2,0,SERVO_MAX);
-  //pwm.setPWM(3,0,SERVO_MAX);
-  moveServoToAngle(0, 0, 180, 100);
-  moveServoToAngle(1, 0, 180, 100);
-  moveServoToAngle(2, 0, 180, 100);
-  moveServoToAngle(3, 0, 180, 100);
-
-  Serial.println("Moved to 180 degrees");
-  delay(5000);
-  //pwm.setPWM(0,0,SERVO_MIN);
-  //pwm.setPWM(1,0,SERVO_MIN);
-  //pwm.setPWM(2,0,SERVO_MIN);
-  //pwm.setPWM(3,0,SERVO_MIN);
-  pwm.setPWM(0,0,angleToPulse(0));
-  pwm.setPWM(1,0,angleToPulse(0));
-  pwm.setPWM(2,0,angleToPulse(0));
-  pwm.setPWM(3,0,angleToPulse(0));
-  Serial.println("Moved to 0 degrees");
 }
