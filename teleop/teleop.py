@@ -1,22 +1,29 @@
 import pygame as pg
-import RPi.GPIO as GPIO
+import serial
 
 curr_pos = [0,0,0,0,0,0,0]
 
 xyz_delta = 0.01
 rot_delta = 0.01
-delta = [xyz_delta, xyz_delta, xyz_delta, rot_delta, rot_delta, rot_delta, 0.01]
+gripper_delta = 0.01
+delta = [xyz_delta, xyz_delta, xyz_delta, rot_delta, rot_delta, rot_delta, gripper_delta]
 
-GPIO.setmode(GPIO.BCM)
 SCREENRECT = pg.Rect(0, 0, 640, 480)
 
 def main():
+    # Set up serial
+    ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
+    ser.reset_input_buffer()
+
+    # Set up pygame
     pg.init()
     fullscreen = False
     # Set the display mode
     winstyle = 0  # |FULLSCREEN
     bestdepth = pg.display.mode_ok(SCREENRECT.size, winstyle, 32)
     screen = pg.display.set_mode(SCREENRECT.size, winstyle, bestdepth)
+    
+    # Keep track of which direction
     directions = [0,0,0,0,0,0,0]
     while True:
         for event in pg.event.get():
@@ -27,7 +34,6 @@ def main():
                 #W/S to control X DOF
                 if event.key == pg.K_w:
                     directions[0] += mult
-                    print("w pressed")
                 if event.key == pg.K_s:
                     directions[0] -= mult
                 #A/D to control Y DOF
@@ -62,7 +68,8 @@ def main():
                     directions[6] -= mult
         for i in range(7):
             curr_pos[i] += directions[i] * delta[i]
-        print(curr_pos)
+        
+        ser.writelines(curr_pos[0] + ", " + curr_pos[1] + ", " + curr_pos[2])
 
 if __name__ == "__main__":
     main()
