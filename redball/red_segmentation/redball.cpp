@@ -110,7 +110,7 @@ int main(int argc, char * argv[]) try
     int fd ;
 
     if (write_to_serial) {
-        if((fd=serialOpen("/dev/ttyACM0",9600))<0){
+        if((fd=serialOpen("/dev/ttyACM0",115200))<0){
             fprintf(stderr,"Unable to open serial device: %s\n",strerror(errno));
             return 1;
         }
