@@ -8,9 +8,9 @@
 
 const double STEPS_PER_M = 1989; // steps per revolution / pitch circumference
 const int MIN_STEPS = 0;
-const int MAX_STEPS = 490; 
+const int MAX_STEPS[3] = {490, 398, 159}; 
 
-int delayValue = 5000; // Starting speed in microseconds
+int delayValue = 500; // Starting speed in microseconds
 int position = 400;     // Motor position in steps
 int currPosition = 0;
 
@@ -47,8 +47,8 @@ void loop() {
         target[index]=current[index];
       } else {
         target[index] = int(STEPS_PER_M * atof(pch));   //convert cstring to double
-//      target[index] = min(target[index], MAX_STEPS);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
-//      target[index] = max(target[index], MIN_STEPS);
+      target[index] = min(target[index], MAX_STEPS[index]);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
+      target[index] = max(target[index], MIN_STEPS);
       }
       pch = strtok(NULL, ",");
       index++;
@@ -77,13 +77,15 @@ void loop() {
 
   for(int i=0;i<3;i++) {
     //move the stepper
-    digitalWrite(stepPins[i], HIGH);
+    if(target[i] != current[i])
+      digitalWrite(stepPins[i], HIGH);
   }
   delayMicroseconds(delayValue);
   
   for(int i=0;i<3;i++) {
     //move the stepper
-    digitalWrite(stepPins[i], LOW);
+    if(target[i] != current[i])
+      digitalWrite(stepPins[i], LOW);
   }
   delayMicroseconds(delayValue);
 
