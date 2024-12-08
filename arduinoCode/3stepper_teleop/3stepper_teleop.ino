@@ -73,11 +73,18 @@ void loop() {
       current[i] += 1;
     }
 //    Serial.println(current[i]);
+  }
 
+  for(int i=0;i<3;i++) {
     //move the stepper
     digitalWrite(stepPins[i], HIGH);
-    delayMicroseconds(delayValue);
-    digitalWrite(stepPins[i], LOW);
-    delayMicroseconds(delayValue);
   }
+  delayMicroseconds(delayValue);
+  
+  for(int i=0;i<3;i++) {
+    //move the stepper
+    digitalWrite(stepPins[i], LOW);
+  }
+  delayMicroseconds(delayValue);
+
 }
