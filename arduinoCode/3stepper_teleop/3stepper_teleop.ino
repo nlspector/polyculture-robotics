@@ -10,7 +10,8 @@ const double STEPS_PER_M = 1989; // steps per revolution / pitch circumference
 const int MIN_STEPS = 0;
 const int MAX_STEPS[3] = {490, 398, 159}; 
 
-int delayValue = 1000; // Starting speed in microseconds
+float speed  = 1; // speed in rotations per second
+int delayValue = round((1/speed) * (2*10^6) * stepsPerRevolution);    // delay between each step
 int position = 400;     // Motor position in steps
 int currPosition = 0;
 
