@@ -6,18 +6,18 @@
 #define dirPin2 5
 #define stepPin3 6
 #define dirPin3 7
-#define stepsPerRevolution 200  // based on the Stepper's specifications
+#define stepsPerRevolution 1000  // based on the Stepper's specifications
 #define SERVOMIN 150  // Min pulse length out of 4096
 #define SERVOMAX 600  // Max pulse length out of 4096
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 const double STEPS_PER_M = 1989; // steps per revolution / pitch circumference
-const int MIN_STEPS = -1000;
-const int MAX_STEPS[7] = {490, 398, 159, 1000, 1000, 1000, 1000}; 
+const int MIN_STEPS = 0;
+const int MAX_STEPS[7] = {490, 398, 159, 180, 180, 180, 180}; 
 
 float speed  = 1; // speed in rotations per second
-int delayValue = round((1/speed) * (2*10^6) * stepsPerRevolution);    // delay between each step
+int delayValue = round((1/speed) * stepsPerRevolution);    // delay between each step
 int position = 400;     // Motor position in steps
 int currPosition = 0;
 
@@ -127,9 +127,15 @@ void loop() {
   // move the servos one at a time
   for(int i=0;i<4;i++){
     // TODO
-    int step = (target[i+3] > current[i+3]) ? 1 : -1;
-    pwm.setPWM(i, 0, angleToPulse(current[i+3]));
-    // delay(delayTime); // Control speed by delaying between steps
-    // moveServoToAngle(i, current[3+i], target[3+i], 50);
+    if (target[i+3] != current[i+3]) {
+      int step = (target[i+3] > current[i+3]) ? 1 : -1;
+      pwm.setPWM(i, 0, angleToPulse(current[i+3]));
+      current[i+3] += step;
+      Serial.print("setting ");
+      Serial.print(i);
+      Serial.print(" to ");
+      Serial.println(current[i+3]);
+      continue;
+    }
   }
 }
