@@ -131,10 +131,10 @@ void loop() {
       int step = (target[i+3] > current[i+3]) ? 1 : -1;
       pwm.setPWM(i, 0, angleToPulse(current[i+3]));
       current[i+3] += step;
-      Serial.print("setting ");
-      Serial.print(i);
-      Serial.print(" to ");
-      Serial.println(current[i+3]);
+//      Serial.print("setting ");
+//      Serial.print(i);
+//      Serial.print(" to ");
+//      Serial.println(current[i+3]);
       continue;
     }
   }
