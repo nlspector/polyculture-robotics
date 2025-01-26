@@ -25,6 +25,7 @@ def main():
     
     # Keep track of which direction
     directions = [0,0,0,0,0,0,0]
+    print("Controls: \n XDOF: W & S \n YDOF: D & A \n ZDOF: J & K \n 1ROT: UP & DOWN \n 2ROT: LEFT & RIGHT \n 3ROT: L & H \n GRIPPER: N & C")
     while True:
         send_message = False
         for event in pg.event.get():
@@ -32,7 +33,7 @@ def main():
                 return
             if event.type == pg.KEYDOWN or event.type == pg.KEYUP:
                 send_message = True
-                print("setting send_message to true")
+                #print("setting send_message to true")
                 mult = 1 if event.type == pg.KEYDOWN else -1
                 #W/S to control X DOF
                 if event.key == pg.K_w:
@@ -74,14 +75,14 @@ def main():
         # ser.flush()
         # print("0.05,0,0\n".encode("ascii"))
         bytes = ser.read_all()
-        if (len(bytes) > 0):
-            print(str(bytes))
+        #if (len(bytes) > 0):
+            #print(str(bytes))
         if (send_message):
             ser.write((direction_to_message(directions)).encode("ascii"))
-            print((direction_to_message(directions)).encode("ascii"))
+            #print((direction_to_message(directions)).encode("ascii"))
 
 def direction_to_message(directions):
-    return format_coord(directions[0]) + "," +format_coord(directions[1]) + "," + format_coord(directions[2]) + "\n"
+    return format_coord(directions[0]) + "," +format_coord(directions[1]) + "," + format_coord(directions[2]) + "," + format_coord(directions[3]) + "," + format_coord(directions[4]) + "," + format_coord(directions[5]) + "," + format_coord(directions[6]) + "\n"
 
 def format_coord(coord):
     if coord == 0:
