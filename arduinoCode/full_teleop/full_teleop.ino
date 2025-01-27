@@ -18,8 +18,6 @@ const int MAX_STEPS[7] = {490, 398, 159, 180, 180, 180, 180};
 
 float speed  = 1; // speed in rotations per second
 int delayValue = round((1/speed) * stepsPerRevolution);    // delay between each step
-int ctr = 0;
-int message_frequency = 100;
 int position = 400;     // Motor position in steps
 int currPosition = 0;
 
@@ -72,25 +70,29 @@ void setup() {
 
 void loop() {
   // Read the raspi's message
+  int getCommand = 0;
   if (Serial.available()) {
     String str = Serial.readStringUntil('\n');
     char* targetXYZ = str.c_str(); // in form: xxxxx,yyyyy,zzzzz,rot11111,rot2222,rot333,gripyyyyy
     //targetXYZ * pch;     // (an attempt to) split raspi's message by commas into an array
-    char* pch = strtok(targetXYZ, ",");
-    int index = 0;
-    while(pch != NULL){
-//      Serial.println(pch);
-      if(strcmp("x", pch) == 0) {
-        target[index]=current[index];
-      } else {
-        target[index] = int(STEPS_PER_M * atof(pch));   //convert cstring to double
-      target[index] = min(target[index], MAX_STEPS[index]);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
-      target[index] = max(target[index], MIN_STEPS);
+    if (strcmp("get", targetXYZ) == 0) {
+      getCommand = 1;
+    } else {
+      char* pch = strtok(targetXYZ, ",");
+      int index = 0;
+      while(pch != NULL){
+  //      Serial.println(pch);
+        if(strcmp("x", pch) == 0) {
+          target[index]=current[index];
+        } else {
+          target[index] = int(STEPS_PER_M * atof(pch));   //convert cstring to double
+        target[index] = min(target[index], MAX_STEPS[index]);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
+        target[index] = max(target[index], MIN_STEPS);
+        }
+        pch = strtok(NULL, ",");
+        index++;
       }
-      pch = strtok(NULL, ",");
-      index++;
     }
-    
   //    Serial.println("New target (m*1989)");
   //    char s[5];
   //    sprintf(s, "%d, %d, %d", target[0], target[1], target[2]);
@@ -140,16 +142,14 @@ void loop() {
       continue;
     }
   }
-  ctr += 1;
-//   write position back on Serial
-  if (ctr == message_frequency) {
-    ctr = 0;
+  if (getCommand == 1) {
     for(int i=0;i<7;i++){
       Serial.print(((double) current[i])/STEPS_PER_M);
-      Serial.print(",");
+      if (i != 6) {
+        Serial.print(",");
+      }
     }
     Serial.println("");
   }
-  
   
 }
