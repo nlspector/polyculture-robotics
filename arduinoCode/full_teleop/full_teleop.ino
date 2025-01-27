@@ -12,12 +12,14 @@
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
-const double STEPS_PER_M = 1989; // steps per revolution / pitch circumference
+const double STEPS_PER_M = 1989.0; // steps per revolution / pitch circumference
 const int MIN_STEPS = 0;
 const int MAX_STEPS[7] = {490, 398, 159, 180, 180, 180, 180}; 
 
 float speed  = 1; // speed in rotations per second
 int delayValue = round((1/speed) * stepsPerRevolution);    // delay between each step
+int ctr = 0;
+int message_frequency = 100;
 int position = 400;     // Motor position in steps
 int currPosition = 0;
 
@@ -77,7 +79,7 @@ void loop() {
     char* pch = strtok(targetXYZ, ",");
     int index = 0;
     while(pch != NULL){
-      Serial.println(pch);
+//      Serial.println(pch);
       if(strcmp("x", pch) == 0) {
         target[index]=current[index];
       } else {
@@ -138,4 +140,16 @@ void loop() {
       continue;
     }
   }
+  ctr += 1;
+//   write position back on Serial
+  if (ctr == message_frequency) {
+    ctr = 0;
+    for(int i=0;i<7;i++){
+      Serial.print(((double) current[i])/STEPS_PER_M);
+      Serial.print(",");
+    }
+    Serial.println("");
+  }
+  
+  
 }
