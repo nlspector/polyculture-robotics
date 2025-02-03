@@ -17,7 +17,7 @@ const int MIN_STEPS = 0;
 const int MAX_STEPS[7] = {490, 398, 159, 180, 180, 180, 180}; 
 
 float speed  = 1; // speed in rotations per second
-int delayValue = round((1/speed) * stepsPerRevolution);    // delay between each step
+int delayValue = 2000;
 int position = 400;     // Motor position in steps
 int currPosition = 0;
 
@@ -25,6 +25,8 @@ int current[7] = {0,0,0,0,0,0,0}; //array of current stepper positions. {X,Y,Z,r
 int target[7] = {0,0,0,0,0,0,0}; //array of desired stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
 int stepPins[3] = {stepPin1,stepPin2,stepPin3};
 int dirPins[3] = {dirPin1,dirPin2,dirPin3};
+
+unsigned long lastStep = 0;
 
 
 // Helper function to map angle (0-180) to PCA9685 PWM pulse length
@@ -98,7 +100,6 @@ void loop() {
   //    sprintf(s, "%d, %d, %d", target[0], target[1], target[2]);
   //    Serial.println(s);
   }
-  
 
   //Move the steppers one at a time
   for(int i=0;i<3;i++){
@@ -119,14 +120,19 @@ void loop() {
     if(target[i] != current[i])
       digitalWrite(stepPins[i], HIGH);
   }
-  delayMicroseconds(delayValue);
+  delayMicroseconds(15);
   
   for(int i=0;i<3;i++) {
     //move the stepper
     if(target[i] != current[i])
       digitalWrite(stepPins[i], LOW);
   }
-  delayMicroseconds(delayValue);
+  unsigned long elapsedTime = micros() - lastStep;
+  if (elapsedTime < delayValue) {
+    delayMicroseconds(delayValue - elapsedTime);
+  }
+  lastStep = micros();
+  
 
   // move the servos one at a time
   for(int i=0;i<4;i++){
