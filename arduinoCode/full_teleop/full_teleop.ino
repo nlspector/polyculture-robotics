@@ -1,12 +1,16 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
+
+#include <AccelStepper.h>
+#include <MultiStepper.h>
+
 #define stepPin1 2
 #define dirPin1 3
 #define stepPin2 4
 #define dirPin2 5
 #define stepPin3 6
 #define dirPin3 7
-#define stepsPerRevolution 1000  // based on the Stepper's specifications
+#define stepsPerRevolution 200  // based on the Stepper's specifications
 #define SERVOMIN 150  // Min pulse length out of 4096
 #define SERVOMAX 600  // Max pulse length out of 4096
 
@@ -28,6 +32,12 @@ int dirPins[3] = {dirPin1,dirPin2,dirPin3};
 
 unsigned long lastStep = 0;
 
+AccelStepper stepper1(AccelStepper::DRIVER, stepPin1, dirPin1);
+AccelStepper stepper2(AccelStepper::DRIVER, stepPin2, dirPin2);
+AccelStepper stepper3(AccelStepper::DRIVER, stepPin3, dirPin3);
+
+// Up to 10 steppers can be handled as a group by MultiStepper
+MultiStepper steppers;
 
 // Helper function to map angle (0-180) to PCA9685 PWM pulse length
 int angleToPulse(int angle) {
@@ -54,12 +64,22 @@ void setup() {
 
   Serial.println("initializing steppers ...");
   // Set pin modes for each motor  
-  pinMode(stepPin1, OUTPUT);
-  pinMode(dirPin1, OUTPUT);
-  pinMode(stepPin2, OUTPUT);
-  pinMode(dirPin2, OUTPUT);
-  pinMode(stepPin3, OUTPUT);
-  pinMode(dirPin3, OUTPUT);
+//  pinMode(stepPin1, OUTPUT);
+//  pinMode(dirPin1, OUTPUT);
+//  pinMode(stepPin2, OUTPUT);
+//  pinMode(dirPin2, OUTPUT);
+//  pinMode(stepPin3, OUTPUT);
+//  pinMode(dirPin3, OUTPUT);
+
+ // Configure each stepper
+  stepper1.setMaxSpeed(100);
+  stepper2.setMaxSpeed(100);
+  stepper3.setMaxSpeed(100);
+ 
+  // Then give them to MultiStepper to manage
+  steppers.addStepper(stepper1);
+  steppers.addStepper(stepper2);
+  steppers.addStepper(stepper3);
 
   pwm.begin();
   pwm.setPWMFreq(60); // Analog servos run at ~60Hz
@@ -101,37 +121,41 @@ void loop() {
   //    Serial.println(s);
   }
 
-  //Move the steppers one at a time
-  for(int i=0;i<3;i++){
-    //determine rotation direction
-    if(target[i] == current[i]) continue;
-    else if (target[i] < current[i]){
-      digitalWrite(dirPins[i],LOW);
-      current[i] -= 1;
-    } else {
-      digitalWrite(dirPins[i],HIGH);
-      current[i] += 1;
-    }
-//    Serial.println(current[i]);
-  }
+  long positions[3] = {target[0], target[1], target[2]};
+  steppers.moveTo(positions);
+  steppers.run();
 
-  for(int i=0;i<3;i++) {
-    //move the stepper
-    if(target[i] != current[i])
-      digitalWrite(stepPins[i], HIGH);
-  }
-  delayMicroseconds(15);
-  
-  for(int i=0;i<3;i++) {
-    //move the stepper
-    if(target[i] != current[i])
-      digitalWrite(stepPins[i], LOW);
-  }
-  unsigned long elapsedTime = micros() - lastStep;
-  if (elapsedTime < delayValue) {
-    delayMicroseconds(delayValue - elapsedTime);
-  }
-  lastStep = micros();
+//  //Move the steppers one at a time
+//  for(int i=0;i<3;i++){
+//    //determine rotation direction
+//    if(target[i] == current[i]) continue;
+//    else if (target[i] < current[i]){
+//      digitalWrite(dirPins[i],LOW);
+//      current[i] -= 1;
+//    } else {
+//      digitalWrite(dirPins[i],HIGH);
+//      current[i] += 1;
+//    }
+////    Serial.println(current[i]);
+//  }
+//
+//  for(int i=0;i<3;i++) {
+//    //move the stepper
+//    if(target[i] != current[i])
+//      digitalWrite(stepPins[i], HIGH);
+//  }
+//  delayMicroseconds(15);
+//  
+//  for(int i=0;i<3;i++) {
+//    //move the stepper
+//    if(target[i] != current[i])
+//      digitalWrite(stepPins[i], LOW);
+//  }
+//  unsigned long elapsedTime = micros() - lastStep;
+//  if (elapsedTime < delayValue) {
+//    delayMicroseconds(delayValue - elapsedTime);
+//  }
+//  lastStep = micros();
   
 
   // move the servos one at a time
