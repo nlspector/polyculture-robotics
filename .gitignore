@@ -2,3 +2,4 @@
 .vscode
 build
 teleop/teleop_venv
+crop_segementation/venv
