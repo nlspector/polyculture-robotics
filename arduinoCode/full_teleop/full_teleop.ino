@@ -15,18 +15,18 @@
 #define SERVOMAX 600  // Max pulse length out of 4096
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
-
-const double STEPS_PER_M = 1989.0; // steps per revolution / pitch circumference
-const int MIN_STEPS = 0;
-const int MAX_STEPS[7] = {490, 398, 159, 180, 180, 180, 180}; 
+// 32 microsteps
+const double STEPS_PER_M = 63648.0; // steps per revolution / pitch circumference
+const long MIN_STEPS = 0;
+const long MAX_STEPS[7] = {15680, 12736, 5088, 180, 180, 180, 180}; 
 
 float speed  = 1; // speed in rotations per second
 int delayValue = 2000;
 int position = 400;     // Motor position in steps
 int currPosition = 0;
 
-int current[7] = {0,0,0,0,0,0,0}; //array of current stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
-int target[7] = {0,0,0,0,0,0,0}; //array of desired stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
+long current[7] = {0,0,0,0,0,0,0}; //array of current stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
+long target[7] = {0,0,0,0,0,0,0}; //array of desired stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
 int stepPins[3] = {stepPin1,stepPin2,stepPin3};
 int dirPins[3] = {dirPin1,dirPin2,dirPin3};
 
@@ -72,17 +72,17 @@ void setup() {
 //  pinMode(dirPin3, OUTPUT);
 
  // Configure each stepper
-  stepper1.setMaxSpeed(100);
-  stepper2.setMaxSpeed(100);
-  stepper3.setMaxSpeed(100);
+  stepper1.setMaxSpeed(4000);
+  stepper2.setMaxSpeed(4000);
+  stepper3.setMaxSpeed(4000);
  
   // Then give them to MultiStepper to manage
   steppers.addStepper(stepper1);
   steppers.addStepper(stepper2);
   steppers.addStepper(stepper3);
 
-  pwm.begin();
-  pwm.setPWMFreq(60); // Analog servos run at ~60Hz
+//  pwm.begin();
+//  pwm.setPWMFreq(60); // Analog servos run at ~60Hz
 
   // Set servos to a 0
   //moveServoToAngle(1,90,180,20);
@@ -103,25 +103,26 @@ void loop() {
       char* pch = strtok(targetXYZ, ",");
       int index = 0;
       while(pch != NULL){
-  //      Serial.println(pch);
+        Serial.println(pch);
         if(strcmp("x", pch) == 0) {
           target[index]=current[index];
         } else {
-          target[index] = int(STEPS_PER_M * atof(pch));   //convert cstring to double
-        target[index] = min(target[index], MAX_STEPS[index]);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
-        target[index] = max(target[index], MIN_STEPS);
+          target[index] = long(STEPS_PER_M * atof(pch));   //convert cstring to double
+          target[index] = min(target[index], MAX_STEPS[index]);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
+          target[index] = max(target[index], MIN_STEPS);
         }
         pch = strtok(NULL, ",");
         index++;
       }
     }
-  //    Serial.println("New target (m*1989)");
-  //    char s[5];
-  //    sprintf(s, "%d, %d, %d", target[0], target[1], target[2]);
-  //    Serial.println(s);
+      Serial.println("New target (m*63648)");
+      char s[100];
+      sprintf(s, "%ld, %ld, %ld", target[0], target[1], target[2]);
+      Serial.println(s);
   }
 
-  long positions[3] = {target[0], target[1], target[2]};
+  // position 3 is backwards
+  long positions[3] = {target[0], target[1], -target[2]};
   steppers.moveTo(positions);
   steppers.run();
 
