@@ -103,7 +103,7 @@ void loop() {
       char* pch = strtok(targetXYZ, ",");
       int index = 0;
       while(pch != NULL){
-        Serial.println(pch);
+//        Serial.println(pch);
         if(strcmp("x", pch) == 0) {
           target[index]=current[index];
         } else {
@@ -115,10 +115,10 @@ void loop() {
         index++;
       }
     }
-      Serial.println("New target (m*63648)");
-      char s[100];
-      sprintf(s, "%ld, %ld, %ld", target[0], target[1], target[2]);
-      Serial.println(s);
+//      Serial.println("New target (m*63648)");
+//      char s[100];
+//      sprintf(s, "%ld, %ld, %ld", target[0], target[1], target[2]);
+//      Serial.println(s);
   }
 
   // position 3 is backwards
@@ -175,7 +175,16 @@ void loop() {
   }
   if (getCommand == 1) {
     for(int i=0;i<7;i++){
-      Serial.print(((double) current[i])/STEPS_PER_M);
+      if (i == 0) {
+       Serial.print(((double) stepper1.currentPosition())/STEPS_PER_M);
+      } else if (i == 1) {
+       Serial.print(((double) stepper2.currentPosition())/STEPS_PER_M);
+      }
+      else if (i == 2) {
+       Serial.print(((double) stepper3.currentPosition())/STEPS_PER_M);
+      } else {
+        Serial.print(((double) current[i])/STEPS_PER_M);
+      }
       if (i != 6) {
         Serial.print(",");
       }
