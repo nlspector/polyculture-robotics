@@ -105,7 +105,16 @@ void loop() {
       while(pch != NULL){
 //        Serial.println(pch);
         if(strcmp("x", pch) == 0) {
-          target[index]=current[index];
+          if (index == 0) {
+            target[index] = stepper1.currentPosition();
+          } else if (index == 1) {
+            target[index] = stepper2.currentPosition();
+          } else if (index == 2) {
+            // this index is backwards, so that up is positive
+            target[index] = -stepper3.currentPosition();
+          } else {
+            target[index]=current[index];
+          }
         } else {
           target[index] = long(STEPS_PER_M * atof(pch));   //convert cstring to double
           target[index] = min(target[index], MAX_STEPS[index]);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
@@ -121,7 +130,6 @@ void loop() {
 //      Serial.println(s);
   }
 
-  // position 3 is backwards
   long positions[3] = {target[0], target[1], -target[2]};
   steppers.moveTo(positions);
   steppers.run();
@@ -181,7 +189,7 @@ void loop() {
        Serial.print(((double) stepper2.currentPosition())/STEPS_PER_M);
       }
       else if (i == 2) {
-       Serial.print(((double) stepper3.currentPosition())/STEPS_PER_M);
+       Serial.print(((double) -stepper3.currentPosition())/STEPS_PER_M);
       } else {
         Serial.print(((double) current[i])/STEPS_PER_M);
       }
