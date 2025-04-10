@@ -42,7 +42,7 @@ const StepperInfo stepperInfo[numSteppers] = {
     23, // dirPin
     0, // minSteps
     1000, // maxSteps
-    100, // maxSpeed
+    300, // maxSpeed
     1000 // stepsPerM
   },
 
@@ -52,7 +52,7 @@ const StepperInfo stepperInfo[numSteppers] = {
     39, // dirPin
     0, // minSteps
     1000, // maxSteps
-    100, // maxSpeed
+    300, // maxSpeed
     1000 // stepsPerM
   },
   
@@ -62,7 +62,7 @@ const StepperInfo stepperInfo[numSteppers] = {
     4, // dirPin
     0, // minSteps
     1000, // maxSteps
-    100, // maxSpeed
+    300, // maxSpeed
     1000 // stepsPerM
   },
 
