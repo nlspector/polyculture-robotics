@@ -148,9 +148,10 @@ void loop() {
         Serial.println(pch);
         if(strcmp("x", pch) == 0) {
           target[index] = singleSteppers[index].currentPosition();
+          singleSteppers[index].stop();
           Serial.print(index);
           Serial.print(": ");
-          Serial.print(singleSteppers[index].currentPosition());
+          Serial.print(target[index]);
           Serial.println("");
         } else {
           target[index] = long(stepperInfo[index].stepsPerM * atof(pch));   //convert cstring to double
