@@ -4,15 +4,11 @@
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
-#define stepPin1 2
-#define dirPin1 3
-#define stepPin2 4
-#define dirPin2 5
-#define stepPin3 6
-#define dirPin3 7
 #define stepsPerRevolution 200  // based on the Stepper's specifications
 #define SERVOMIN 150  // Min pulse length out of 4096
 #define SERVOMAX 600  // Max pulse length out of 4096
+
+#define numSteppers 5
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // 32 microsteps
@@ -25,16 +21,73 @@ int delayValue = 2000;
 int position = 400;     // Motor position in steps
 int currPosition = 0;
 
-long current[7] = {0,0,0,0,0,0,0}; //array of current stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
-long target[7] = {0,0,0,0,0,0,0}; //array of desired stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
-int stepPins[3] = {stepPin1,stepPin2,stepPin3};
-int dirPins[3] = {dirPin1,dirPin2,dirPin3};
+long current[numSteppers] = {0,0,0,0,0}; //array of current stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
+long target[numSteppers] = {0,0,0,0,0}; //array of desired stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
+
+// Begin Stepper Configuration
+
+struct StepperInfo {
+  short stepPin;
+  short dirPin;
+  int minSteps;
+  int maxSteps;
+  int maxSpeed;
+  double stepsPerM;
+};
+
+const StepperInfo stepperInfo[numSteppers] = {
+  // First DOF
+  {
+    22, // stepPin
+    23, // dirPin
+    0, // minSteps
+    1000, // maxSteps
+    100, // maxSpeed
+    1000 // stepsPerM
+  },
+
+  // Crossbar DOF
+  {
+    38, // stepPin
+    39, // dirPin
+    0, // minSteps
+    1000, // maxSteps
+    100, // maxSpeed
+    1000 // stepsPerM
+  },
+  
+  // Vertical DOF
+  {
+    3, // stepPin
+    4, // dirPin
+    0, // minSteps
+    1000, // maxSteps
+    100, // maxSpeed
+    1000 // stepsPerM
+  },
+
+  {
+    8, // stepPin
+    9, // dirPin
+    0, // minSteps
+    1000, // maxSteps
+    100, // maxSpeed
+    1000 // stepsPerM
+  },
+  
+  {
+    10, // stepPin
+    11, // dirPin
+    0, // minSteps
+    1000, // maxSteps
+    100, // maxSpeed
+    1000 // stepsPerM
+  }
+};
 
 unsigned long lastStep = 0;
 
-AccelStepper stepper1(AccelStepper::DRIVER, stepPin1, dirPin1);
-AccelStepper stepper2(AccelStepper::DRIVER, stepPin2, dirPin2);
-AccelStepper stepper3(AccelStepper::DRIVER, stepPin3, dirPin3);
+AccelStepper singleSteppers[numSteppers];
 
 // Up to 10 steppers can be handled as a group by MultiStepper
 MultiStepper steppers;
@@ -63,23 +116,12 @@ void setup() {
   Serial.begin(115200); // Start serial communication
 
   Serial.println("initializing steppers ...");
-  // Set pin modes for each motor  
-//  pinMode(stepPin1, OUTPUT);
-//  pinMode(dirPin1, OUTPUT);
-//  pinMode(stepPin2, OUTPUT);
-//  pinMode(dirPin2, OUTPUT);
-//  pinMode(stepPin3, OUTPUT);
-//  pinMode(dirPin3, OUTPUT);
-
- // Configure each stepper
-  stepper1.setMaxSpeed(4000);
-  stepper2.setMaxSpeed(4000);
-  stepper3.setMaxSpeed(4000);
- 
-  // Then give them to MultiStepper to manage
-  steppers.addStepper(stepper1);
-  steppers.addStepper(stepper2);
-  steppers.addStepper(stepper3);
+  for (int i = 0; i < numSteppers; i++) {
+    singleSteppers[i] = AccelStepper(AccelStepper::DRIVER, stepperInfo[i].stepPin, stepperInfo[i].dirPin);
+    singleSteppers[i].setMaxSpeed(stepperInfo[i].maxSpeed);
+    steppers.addStepper(singleSteppers[i]);
+    
+  }
 
 //  pwm.begin();
 //  pwm.setPWMFreq(60); // Analog servos run at ~60Hz
@@ -103,35 +145,28 @@ void loop() {
       char* pch = strtok(targetXYZ, ",");
       int index = 0;
       while(pch != NULL){
-//        Serial.println(pch);
+        Serial.println(pch);
         if(strcmp("x", pch) == 0) {
-          if (index == 0) {
-            target[index] = stepper1.currentPosition();
-          } else if (index == 1) {
-            target[index] = stepper2.currentPosition();
-          } else if (index == 2) {
-            // this index is backwards, so that up is positive
-            target[index] = -stepper3.currentPosition();
-          } else {
-            target[index]=current[index];
-          }
+          target[index] = singleSteppers[index].currentPosition();
+          Serial.print(index);
+          Serial.print(": ");
+          Serial.print(singleSteppers[index].currentPosition());
+          Serial.println("");
         } else {
-          target[index] = long(STEPS_PER_M * atof(pch));   //convert cstring to double
-          target[index] = min(target[index], MAX_STEPS[index]);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
-          target[index] = max(target[index], MIN_STEPS);
+          target[index] = long(stepperInfo[index].stepsPerM * atof(pch));   //convert cstring to double
+          target[index] = min(target[index], stepperInfo[index].maxSteps);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
+          target[index] = max(target[index], stepperInfo[index].minSteps);
         }
         pch = strtok(NULL, ",");
         index++;
       }
+      steppers.moveTo(target);
     }
 //      Serial.println("New target (m*63648)");
 //      char s[100];
 //      sprintf(s, "%ld, %ld, %ld", target[0], target[1], target[2]);
 //      Serial.println(s);
   }
-
-  long positions[3] = {target[0], target[1], -target[2]};
-  steppers.moveTo(positions);
   steppers.run();
 
 //  //Move the steppers one at a time
@@ -168,32 +203,33 @@ void loop() {
   
 
   // move the servos one at a time
-  for(int i=0;i<4;i++){
-    // TODO
-    if (target[i+3] != current[i+3]) {
-      int step = (target[i+3] > current[i+3]) ? 1 : -1;
-//      pwm.setPWM(i, 0, angleToPulse(current[i+3]));
-      current[i+3] += step;
-//      Serial.print("setting ");
-//      Serial.print(i);
-//      Serial.print(" to ");
-//      Serial.println(current[i+3]);
-      continue;
-    }
-  }
+//  for(int i=0;i<4;i++){
+//    // TODO
+//    if (target[i+3] != current[i+3]) {
+//      int step = (target[i+3] > current[i+3]) ? 1 : -1;
+////      pwm.setPWM(i, 0, angleToPulse(current[i+3]));
+//      current[i+3] += step;
+////      Serial.print("setting ");
+////      Serial.print(i);
+////      Serial.print(" to ");
+////      Serial.println(current[i+3]);
+//      continue;
+//    }
+//  }
   if (getCommand == 1) {
-    for(int i=0;i<7;i++){
-      if (i == 0) {
-       Serial.print(((double) stepper1.currentPosition())/STEPS_PER_M);
-      } else if (i == 1) {
-       Serial.print(((double) stepper2.currentPosition())/STEPS_PER_M);
-      }
-      else if (i == 2) {
-       Serial.print(((double) -stepper3.currentPosition())/STEPS_PER_M);
-      } else {
-        Serial.print(((double) current[i])/STEPS_PER_M);
-      }
-      if (i != 6) {
+    for(int i=0;i<numSteppers;i++){
+       Serial.print(((double) singleSteppers[i].currentPosition())/STEPS_PER_M);
+//      if (i == 0) {
+//       Serial.print(((double) stepper1.currentPosition())/STEPS_PER_M);
+//      } else if (i == 1) {
+//       Serial.print(((double) stepper2.currentPosition())/STEPS_PER_M);
+//      }
+//      else if (i == 2) {
+//       Serial.print(((double) -stepper3.currentPosition())/STEPS_PER_M);
+//      } else {
+//        Serial.print(((double) current[i])/STEPS_PER_M);
+//      }
+      if (i != numSteppers - 1) {
         Serial.print(",");
       }
     }
