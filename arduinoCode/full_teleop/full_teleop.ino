@@ -48,8 +48,8 @@ const StepperInfo stepperInfo[numSteppers] = {
 
   // Crossbar DOF
   {
-    38, // stepPin
-    39, // dirPin
+    30, // stepPin
+    31, // dirPin
     0, // minSteps
     1000, // maxSteps
     300, // maxSpeed
@@ -66,18 +66,20 @@ const StepperInfo stepperInfo[numSteppers] = {
     1000 // stepsPerM
   },
 
+  // Diff 1
   {
-    8, // stepPin
-    9, // dirPin
+    36, // stepPin
+    37, // dirPin
     0, // minSteps
     1000, // maxSteps
     100, // maxSpeed
     1000 // stepsPerM
   },
-  
+
+  // Diff 2
   {
-    10, // stepPin
-    11, // dirPin
+    42, // stepPin
+    43, // dirPin
     0, // minSteps
     1000, // maxSteps
     100, // maxSpeed
