@@ -8,7 +8,7 @@
 #define SERVOMIN 150  // Min pulse length out of 4096
 #define SERVOMAX 600  // Max pulse length out of 4096
 
-#define numSteppers 6
+#define numSteppers 7
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // 32 microsteps
@@ -21,8 +21,8 @@ int delayValue = 2000;
 int position = 400;     // Motor position in steps
 int currPosition = 0;
 
-long current[numSteppers] = {0,0,0,0,0}; //array of current stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
-long target[numSteppers] = {0,0,0,0,0}; //array of desired stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
+long current[numSteppers] = {0,0,0,0,0,0,0}; //array of current stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
+long target[numSteppers] = {0,0,0,0,0,0,0}; //array of desired stepper positions. {X,Y,Z,rot1,rot2,rot3,grip}
 
 // Begin Stepper Configuration
 
@@ -72,22 +72,22 @@ const StepperInfo stepperInfo[numSteppers] = {
 
   // Diff 1
   {
-    11,//36, // stepPin
-    12, //37, // dirPin
+    36, // stepPin
+    37, // dirPin
     0, // minSteps
     1000, // maxSteps
-    100, // maxSpeed
+    200, // maxSpeed
     1000, // stepsPerM
     200 // maxAcceleration
   },
 
   // Diff 2
   {
-    13, //,42, // stepPin
-    14, //43, // dirPin
+    42, // stepPin
+    43, // dirPin
     0, // minSteps
     1000, // maxSteps
-    100, // maxSpeed
+    200, // maxSpeed
     1000, // stepsPerM
     200 // maxAcceleration
   },
@@ -101,7 +101,19 @@ const StepperInfo stepperInfo[numSteppers] = {
     1000, // maxSpeed
     1000, // stepsPerRadian
     1000 // maxAcceleration
-  }
+  },
+
+  // Gripper
+  {
+    52, // stepPin
+    53, // dirPin
+    -2000, // minSteps
+    2000, // maxSteps
+    1000, // maxSpeed
+    1000, // stepsPerRadian
+    1000 // maxAcceleration
+  },
+  
 };
 
 unsigned long lastStep = 0;
