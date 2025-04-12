@@ -8,7 +8,7 @@
 #define SERVOMIN 150  // Min pulse length out of 4096
 #define SERVOMAX 600  // Max pulse length out of 4096
 
-#define numSteppers 5
+#define numSteppers 6
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // 32 microsteps
@@ -33,6 +33,7 @@ struct StepperInfo {
   int maxSteps;
   int maxSpeed;
   double stepsPerM;
+  double maxAcceleration;
 };
 
 const StepperInfo stepperInfo[numSteppers] = {
@@ -40,10 +41,11 @@ const StepperInfo stepperInfo[numSteppers] = {
   {
     22, // stepPin
     23, // dirPin
-    0, // minSteps
+    -1000, // minSteps
     1000, // maxSteps
-    300, // maxSpeed
-    1000 // stepsPerM
+    200, // maxSpeed
+    2508, // stepsPerM
+    200 // maxAcceleration
   },
 
   // Crossbar DOF
@@ -52,8 +54,9 @@ const StepperInfo stepperInfo[numSteppers] = {
     31, // dirPin
     0, // minSteps
     1000, // maxSteps
-    300, // maxSpeed
-    1000 // stepsPerM
+    200, // maxSpeed
+    2508, // stepsPerM
+    200 // maxAcceleration
   },
   
   // Vertical DOF
@@ -62,28 +65,42 @@ const StepperInfo stepperInfo[numSteppers] = {
     4, // dirPin
     0, // minSteps
     1000, // maxSteps
-    300, // maxSpeed
-    1000 // stepsPerM
+    200, // maxSpeed
+    5016, // stepsPerM
+    200 // maxAcceleration
   },
 
   // Diff 1
   {
-    36, // stepPin
-    37, // dirPin
+    11,//36, // stepPin
+    12, //37, // dirPin
     0, // minSteps
     1000, // maxSteps
     100, // maxSpeed
-    1000 // stepsPerM
+    1000, // stepsPerM
+    200 // maxAcceleration
   },
 
   // Diff 2
   {
-    42, // stepPin
-    43, // dirPin
+    13, //,42, // stepPin
+    14, //43, // dirPin
     0, // minSteps
     1000, // maxSteps
     100, // maxSpeed
-    1000 // stepsPerM
+    1000, // stepsPerM
+    200 // maxAcceleration
+  },
+
+  // Wrist
+  {
+    26, // stepPin
+    27, // dirPin
+    -2000, // minSteps
+    2000, // maxSteps
+    1000, // maxSpeed
+    1000, // stepsPerRadian
+    1000 // maxAcceleration
   }
 };
 
@@ -121,7 +138,8 @@ void setup() {
   for (int i = 0; i < numSteppers; i++) {
     singleSteppers[i] = AccelStepper(AccelStepper::DRIVER, stepperInfo[i].stepPin, stepperInfo[i].dirPin);
     singleSteppers[i].setMaxSpeed(stepperInfo[i].maxSpeed);
-    steppers.addStepper(singleSteppers[i]);
+    singleSteppers[i].setAcceleration(stepperInfo[i].maxAcceleration);
+//    steppers.addStepper(singleSteppers[i]);
     
   }
 
@@ -147,30 +165,33 @@ void loop() {
       char* pch = strtok(targetXYZ, ",");
       int index = 0;
       while(pch != NULL){
-        Serial.println(pch);
+//        Serial.println(pch);
         if(strcmp("x", pch) == 0) {
           target[index] = singleSteppers[index].currentPosition();
           singleSteppers[index].stop();
-          Serial.print(index);
-          Serial.print(": ");
-          Serial.print(target[index]);
-          Serial.println("");
+//          Serial.print(index);
+//          Serial.print(": ");
+//          Serial.print(target[index]);
+//          Serial.println("");
         } else {
           target[index] = long(stepperInfo[index].stepsPerM * atof(pch));   //convert cstring to double
           target[index] = min(target[index], stepperInfo[index].maxSteps);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
           target[index] = max(target[index], stepperInfo[index].minSteps);
         }
+        singleSteppers[index].moveTo(target[index]);
         pch = strtok(NULL, ",");
         index++;
       }
-      steppers.moveTo(target);
+//      steppers.moveTo(target);
     }
 //      Serial.println("New target (m*63648)");
 //      char s[100];
 //      sprintf(s, "%ld, %ld, %ld", target[0], target[1], target[2]);
 //      Serial.println(s);
   }
-  steppers.run();
+  for (int i = 0; i < numSteppers; i++) {
+    singleSteppers[i].run();
+  }
 
 //  //Move the steppers one at a time
 //  for(int i=0;i<3;i++){
@@ -221,7 +242,7 @@ void loop() {
 //  }
   if (getCommand == 1) {
     for(int i=0;i<numSteppers;i++){
-       Serial.print(((double) singleSteppers[i].currentPosition())/STEPS_PER_M);
+       Serial.print(((double) singleSteppers[i].currentPosition())/stepperInfo[i].stepsPerM);
 //      if (i == 0) {
 //       Serial.print(((double) stepper1.currentPosition())/STEPS_PER_M);
 //      } else if (i == 1) {
