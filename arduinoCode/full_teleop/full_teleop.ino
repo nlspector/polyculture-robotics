@@ -70,28 +70,6 @@ const StepperInfo stepperInfo[numSteppers] = {
     200 // maxAcceleration
   },
 
-  // Diff 1
-  {
-    36, // stepPin
-    37, // dirPin
-    0, // minSteps
-    1000, // maxSteps
-    200, // maxSpeed
-    1000, // stepsPerM
-    200 // maxAcceleration
-  },
-
-  // Diff 2
-  {
-    42, // stepPin
-    43, // dirPin
-    0, // minSteps
-    1000, // maxSteps
-    200, // maxSpeed
-    1000, // stepsPerM
-    200 // maxAcceleration
-  },
-
   // Wrist
   {
     26, // stepPin
@@ -101,6 +79,28 @@ const StepperInfo stepperInfo[numSteppers] = {
     1000, // maxSpeed
     1000, // stepsPerRadian
     1000 // maxAcceleration
+  },
+
+  // Diff 1
+  {
+    36, // stepPin
+    37, // dirPin
+    -500, // minSteps
+    1000, // maxSteps
+    200, // maxSpeed
+    350, // stepsPerRadian
+    200 // maxAcceleration
+  },
+
+  // Diff 2
+  {
+    42, // stepPin
+    43, // dirPin
+    -500, // minSteps
+    1000, // maxSteps
+    200, // maxSpeed
+    350, // stepsPerRadian
+    200 // maxAcceleration
   },
 
   // Gripper
