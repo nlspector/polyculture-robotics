@@ -39,8 +39,8 @@ struct StepperInfo {
 const StepperInfo stepperInfo[numSteppers] = {
   // First DOF
   {
-    22, // stepPin
-    23, // dirPin
+    49, // stepPin
+    48, // dirPin
     -1000, // minSteps
     1000, // maxSteps
     200, // maxSpeed
@@ -50,8 +50,8 @@ const StepperInfo stepperInfo[numSteppers] = {
 
   // Crossbar DOF
   {
-    30, // stepPin
-    31, // dirPin
+    45, // stepPin
+    44, // dirPin
     0, // minSteps
     1000, // maxSteps
     200, // maxSpeed
@@ -61,8 +61,8 @@ const StepperInfo stepperInfo[numSteppers] = {
   
   // Vertical DOF
   {
-    3, // stepPin
-    4, // dirPin
+    53, // stepPin
+    52, // dirPin
     0, // minSteps
     1000, // maxSteps
     200, // maxSpeed
@@ -72,8 +72,8 @@ const StepperInfo stepperInfo[numSteppers] = {
 
   // Wrist
   {
-    26, // stepPin
-    27, // dirPin
+    41, // stepPin
+    40, // dirPin
     -2000, // minSteps
     2000, // maxSteps
     1000, // maxSpeed
@@ -83,30 +83,30 @@ const StepperInfo stepperInfo[numSteppers] = {
 
   // Diff 1
   {
-    36, // stepPin
-    37, // dirPin
+    33, // stepPin
+    32, // dirPin
     -500, // minSteps
     1000, // maxSteps
-    200, // maxSpeed
+    75, // maxSpeed
     350, // stepsPerRadian
     200 // maxAcceleration
   },
 
   // Diff 2
   {
-    42, // stepPin
-    43, // dirPin
+    11, // stepPin
+    10, // dirPin
     -500, // minSteps
     1000, // maxSteps
-    200, // maxSpeed
+    75, // maxSpeed
     350, // stepsPerRadian
     200 // maxAcceleration
   },
 
   // Gripper
   {
-    52, // stepPin
-    53, // dirPin
+    9, // stepPin
+    8, // dirPin
     -2000, // minSteps
     2000, // maxSteps
     1000, // maxSpeed
