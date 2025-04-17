@@ -52,7 +52,7 @@ const StepperInfo stepperInfo[numSteppers] = {
   {
     45, // stepPin
     44, // dirPin
-    0, // minSteps
+    -1000, // minSteps
     1000, // maxSteps
     200, // maxSpeed
     2508, // stepsPerM
@@ -85,7 +85,7 @@ const StepperInfo stepperInfo[numSteppers] = {
   {
     33, // stepPin
     32, // dirPin
-    -500, // minSteps
+    -1000, // minSteps
     1000, // maxSteps
     75, // maxSpeed
     350, // stepsPerRadian
@@ -96,7 +96,7 @@ const StepperInfo stepperInfo[numSteppers] = {
   {
     11, // stepPin
     10, // dirPin
-    -500, // minSteps
+    -1000, // minSteps
     1000, // maxSteps
     75, // maxSpeed
     350, // stepsPerRadian
@@ -107,8 +107,8 @@ const StepperInfo stepperInfo[numSteppers] = {
   {
     9, // stepPin
     8, // dirPin
-    -2000, // minSteps
-    2000, // maxSteps
+    -10000, // minSteps
+    10000, // maxSteps
     1000, // maxSpeed
     1000, // stepsPerRadian
     1000 // maxAcceleration
@@ -174,8 +174,8 @@ void loop() {
           target[index] = long(stepperInfo[index].stepsPerM * atof(pch));   //convert cstring to double
           target[index] = min(target[index], stepperInfo[index].maxSteps);   // ensure target position is inbetween MAX_STEPS and MIN_STEPS
           target[index] = max(target[index], stepperInfo[index].minSteps);
+          singleSteppers[index].moveTo(target[index]);
         }
-        singleSteppers[index].moveTo(target[index]);
         pch = strtok(NULL, ",");
         index++;
       }
