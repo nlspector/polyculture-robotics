@@ -82,7 +82,8 @@ def main():
             #print((direction_to_message(directions)).encode("ascii"))
 
 def direction_to_message(directions):
-    return format_coord(directions[0]) + "," +format_coord(directions[1]) + "," + format_coord(directions[2]) + "," + format_coord(directions[3]) + "," + format_coord(directions[4]) + "," + format_coord(directions[5]) + "," + format_coord(directions[6]) + "\n"
+
+    return format_coord(directions[0]) + "," +format_coord(directions[1]) + "," + format_coord(directions[2]) + "," + format_coord(directions[3]) + "," + format_coord(0.5 * directions[4] + directions[5]) + "," + format_coord(-(0.5 * directions[4] - directions[5])) + "," + format_coord(directions[6]) + "\n"
 
 def format_coord(coord):
     if coord == 0:

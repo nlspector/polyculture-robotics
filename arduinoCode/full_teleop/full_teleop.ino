@@ -43,7 +43,7 @@ const StepperInfo stepperInfo[numSteppers] = {
     48, // dirPin
     -1000, // minSteps
     1000, // maxSteps
-    200, // maxSpeed
+    400, // maxSpeed
     2508, // stepsPerM
     200 // maxAcceleration
   },
@@ -65,7 +65,7 @@ const StepperInfo stepperInfo[numSteppers] = {
     52, // dirPin
     0, // minSteps
     1000, // maxSteps
-    200, // maxSpeed
+    400, // maxSpeed
     5016, // stepsPerM
     200 // maxAcceleration
   },
@@ -123,25 +123,7 @@ AccelStepper singleSteppers[numSteppers];
 // Up to 10 steppers can be handled as a group by MultiStepper
 MultiStepper steppers;
 
-// Helper function to map angle (0-180) to PCA9685 PWM pulse length
-int angleToPulse(int angle) {
-  return map(angle, 0, 180, SERVOMIN, SERVOMAX);
-}
-
-// Function to move servo to a target angle at a specified speed
-void moveServoToAngle(int channel, int currentAngle, int targetAngle, int speed) {
-  int step = (targetAngle > currentAngle) ? 1 : -1; // Determine the direction of movement
-  if (targetAngle == currentAngle) { return; }
-  int delayTime = 1000 / speed;  // Speed control: higher speed means smaller delay
-  
-  // Move servo in small steps towards target angle
-  for (int angle = currentAngle; angle != targetAngle; angle += step) {
-    pwm.setPWM(channel, 0, angleToPulse(angle));
-    delay(delayTime); // Control speed by delaying between steps
-  }
-  // Set the final angle to ensure it reaches target precisely
-  pwm.setPWM(channel, 0, angleToPulse(targetAngle));
-}
+AccelStepper cutter;
 
 void setup() {
   Serial.begin(115200); // Start serial communication
@@ -154,17 +136,16 @@ void setup() {
 //    steppers.addStepper(singleSteppers[i]);
     
   }
-
-//  pwm.begin();
-//  pwm.setPWMFreq(60); // Analog servos run at ~60Hz
-
-  // Set servos to a 0
-  //moveServoToAngle(1,90,180,20);
+  cutter = AccelStepper(AccelStepper::HALF4WIRE, 24, 22, 25, 23);
+  cutter.setMaxSpeed(2000);
+  cutter.setAcceleration(1000);
+  
   Serial.println("meow");
   delay(1000);
 }
 
 void loop() {
+
   // Read the raspi's message
   int getCommand = 0;
   if (Serial.available()) {
@@ -173,6 +154,10 @@ void loop() {
     //targetXYZ * pch;     // (an attempt to) split raspi's message by commas into an array
     if (strcmp("get", targetXYZ) == 0) {
       getCommand = 1;
+    } else if (strcmp("cut", targetXYZ) == 0) {
+        cutter.moveTo(160);
+    } else if (strcmp("uncut", targetXYZ) == 0) {
+        cutter.moveTo(0);
     } else {
       char* pch = strtok(targetXYZ, ",");
       int index = 0;
@@ -205,66 +190,17 @@ void loop() {
     singleSteppers[i].run();
   }
 
-//  //Move the steppers one at a time
-//  for(int i=0;i<3;i++){
-//    //determine rotation direction
-//    if(target[i] == current[i]) continue;
-//    else if (target[i] < current[i]){
-//      digitalWrite(dirPins[i],LOW);
-//      current[i] -= 1;
-//    } else {
-//      digitalWrite(dirPins[i],HIGH);
-//      current[i] += 1;
-//    }
-////    Serial.println(current[i]);
+  cutter.run();
+//  if (cutter.currentPosition() >= 5) {
+//    cutter.moveTo(-5);
 //  }
-//
-//  for(int i=0;i<3;i++) {
-//    //move the stepper
-//    if(target[i] != current[i])
-//      digitalWrite(stepPins[i], HIGH);
+//  if (cutter.currentPosition() <= -5) {
+//    cutter.moveTo(5);
 //  }
-//  delayMicroseconds(15);
-//  
-//  for(int i=0;i<3;i++) {
-//    //move the stepper
-//    if(target[i] != current[i])
-//      digitalWrite(stepPins[i], LOW);
-//  }
-//  unsigned long elapsedTime = micros() - lastStep;
-//  if (elapsedTime < delayValue) {
-//    delayMicroseconds(delayValue - elapsedTime);
-//  }
-//  lastStep = micros();
-  
 
-  // move the servos one at a time
-//  for(int i=0;i<4;i++){
-//    // TODO
-//    if (target[i+3] != current[i+3]) {
-//      int step = (target[i+3] > current[i+3]) ? 1 : -1;
-////      pwm.setPWM(i, 0, angleToPulse(current[i+3]));
-//      current[i+3] += step;
-////      Serial.print("setting ");
-////      Serial.print(i);
-////      Serial.print(" to ");
-////      Serial.println(current[i+3]);
-//      continue;
-//    }
-//  }
   if (getCommand == 1) {
     for(int i=0;i<numSteppers;i++){
        Serial.print(((double) singleSteppers[i].currentPosition())/stepperInfo[i].stepsPerM);
-//      if (i == 0) {
-//       Serial.print(((double) stepper1.currentPosition())/STEPS_PER_M);
-//      } else if (i == 1) {
-//       Serial.print(((double) stepper2.currentPosition())/STEPS_PER_M);
-//      }
-//      else if (i == 2) {
-//       Serial.print(((double) -stepper3.currentPosition())/STEPS_PER_M);
-//      } else {
-//        Serial.print(((double) current[i])/STEPS_PER_M);
-//      }
       if (i != numSteppers - 1) {
         Serial.print(",");
       }
